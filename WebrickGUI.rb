@@ -52,6 +52,9 @@ def parseArg
 		command: command,
 		commandName: command[0],
 		commandFull: command.join(' '),
+		url: "http://localhost:#{OPTS[:p]}/",
+		port: OPTS[:p],
+		host: "localhost",
 	}
 end
 
@@ -176,5 +179,23 @@ end
 	end
 end
 
+
+#
+# Open browser
+#
+def openBrowser(url)
+	case RbConfig::CONFIG['host_os']
+	when /mswin|mingw|cygwin/
+		spawn "start #{url}"
+	when /darwin/
+		spawn "open #{url}"
+	when /linux|bsd/
+		spawn "xdg-open #{url}"
+	end
+end
+openBrowser( @meta[:url] )
+
+
+# wait
 @server_thread.join
 
