@@ -16,7 +16,12 @@ def server_start(port: PORT, rootdir: ROOTDIR, meta: {}, &block)
 	server.mount_proc '/' do |req, res|
 		case req.path
 		when '/'
-			filepath = THISDIR + '/index.html.erb'
+			filepath =
+				case true
+				when File.exist?("index.html.erb") then 'index.html.erb'
+				when File.exist?("index.html")     then 'index.html'
+				else THISDIR + '/index.html.erb'
+				end
 			res.content_type = "text/html"
 			res.body = ERB.new( File.read(filepath) ).result(binding)
 		when '/get'
