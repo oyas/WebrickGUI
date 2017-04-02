@@ -127,6 +127,7 @@ def start_checkalive_thread
 					break
 				end
 				Thread.pass
+				sleep 0.1
 			end
 		rescue => e
 			p e
