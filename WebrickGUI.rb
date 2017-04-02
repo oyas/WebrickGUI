@@ -16,47 +16,48 @@ OPTS = {
 #
 # parse arg
 #
-do
+def parseArg
 	parser = OptionParser.new
 	parser.version = '0.0.1-dev'
 	parser.banner = "Usage: WebrickGUI [options] command"
 	parser.on('-p port', '--port:10080') {|v| OPTS[:p] = v}
-	
+
 	args = []
-	ARGV2 = []
+	_ARGV2 = []
 	err = ""
 	while !ARGV.empty? do
-		ARGV2.push( ARGV.shift )
+		_ARGV2.push( ARGV.shift )
 		err = ""
 		begin
-			args = parser.parse(ARGV2)
-		rescue OptionParser::InvalidOption => e
-			err = e.message
-		rescue OptionParser::MissingArgument => e
+			args = parser.parse(_ARGV2)
+		rescue => e
 			err = e.message
 		end
 		break if !args.empty?
 	end
-	
+
 	if !err.empty?
 		puts err
 		exit
 	end
-	
+
 	if args.empty? || args[0].empty?
 		puts "Too few options."
 		exit
 	end
-	
+
 	command = args.concat( ARGV )
 
-	# meta data
-	@meta = {
+	return {
 		command: command,
 		commandName: command[0],
 		commandFull: command.join(' '),
 	}
 end
+
+# meta data
+@meta = parseArg()
+
 
 
 #
