@@ -86,6 +86,26 @@ var WebrickGUI = {
 
 	/**
 	 * parse JSON data
+	 *
+	 * @param data:     parse data
+	 *
+	 * 1. basic style. render by "render" renderer.
+	 *  {
+	 *      "render": "renderer name",
+	 *      "content": data,
+	 *  }
+	 *
+	 * 2. html renderer short style. render by html renderer.
+	 *  {
+	 *      "element name": {attributes},
+	 *      "content": data,
+	 *  }
+	 *
+	 * 3. Array. render by blocks renderer.
+	 *  [ data, ... ]
+	 *
+	 * 4. other data type. render by raw renderer.
+	 *  "string"
 	 */
 	parse: function(data){
 		if( $.isArray(data) ){
@@ -99,6 +119,18 @@ var WebrickGUI = {
 		if( $.isPlainObject(data) ){
 			if( !('content' in data) ){
 				return WebrickGUI._renderer['raw']( {'content': data} );
+			}
+
+			// parse 'element name': {attributes}
+			if( !('render' in data) ){
+				$.each( data, (key, val) => {
+					if( key != 'content' ){
+						data['render']    = 'html';
+						data['element']   = key;
+						data['attribute'] = val;
+						return false;
+					}
+				});
 			}
 
 			let renderer = WebrickGUI.parse;
