@@ -32,7 +32,7 @@ def server_start(port: PORT, rootdir: ROOTDIR, meta: {}, &block)
 			res.content_type = "text/javascript"
 			res.body = File.read(filepath)
 		else
-			WEBrick::HTTPServlet::FileHandler.new(server, ROOTDIR + req.path).service(req, res);
+			WEBrick::HTTPServlet::FileHandler.new(server, req.path).service(req, res);
 		end
 	end
 
