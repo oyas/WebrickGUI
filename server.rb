@@ -1,43 +1,36 @@
 #!/usr/bin/ruby
 # coding: utf-8
 
-require 'webrick'
+require 'json'
+require_relative "pipe.rb"
+require_relative "webrick.rb"
 
-THISDIR = File.expand_path(File.dirname(__FILE__))
-ROOTDIR = './'
-PORT = 10080
 
-def server_start(port: PORT, rootdir: ROOTDIR, meta: {}, &block)
-	server = WEBrick::HTTPServer.new({
-		:DocumentRoot => rootdir,
-		:Port => port,
-	})
+module WebrickGUI
 
-	server.mount_proc '/' do |req, res|
-		case req.path
-		when '/'
-			filepath =
-				case true
-				when File.exist?("index.html.erb") then 'index.html.erb'
-				when File.exist?("index.html")     then 'index.html'
-				else THISDIR + '/index.html.erb'
-				end
-			res.content_type = "text/html"
-			res.body = ERB.new( File.read(filepath) ).result(binding)
-		when '/get'
-			res.content_type = "application/json"
-			res.body = block.call req, res
-		when '/main.js'
-			filepath = THISDIR + '/main.js'
-			res.content_type = "text/javascript"
-			res.body = File.read(filepath)
-		else
-			WEBrick::HTTPServlet::FileHandler.new(server, rootdir).service(req, res);
+	#
+	# WebrickGUI main server class
+	#
+	class Server
+
+		def initialize(meta)
+			@meta = meta
+
+			# run user program
+			@pipe = WebrickGUI::Pipe.new( @meta[:commandFull] )
+
+			# start webrick server
+			@webrick = WebrickGUI::Webrick.new(@meta){ |req|
+				# send user request to user program
+				@pipe.send( req.query.to_json )
+			}
+
+			# auto open browser
+			WebrickGUI.openBrowser( @meta[:url] )
 		end
+
+		attr_accessor :meta, :pipe, :webrick
+
 	end
-
-	Signal.trap(:INT){ server.shutdown }
-
-	server.start
 
 end

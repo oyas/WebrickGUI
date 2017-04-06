@@ -2,201 +2,92 @@
 # coding: utf-8
 
 require 'optparse'
-require 'open3'
-require 'thread'
-require 'json'
-
 require_relative "server.rb"
 
-OPTS = {
-	:p => 10080,
-}
 
+module WebrickGUI
 
-#
-# parse arg
-#
-def parseArg
-	parser = OptionParser.new
-	parser.version = '0.0.1-dev'
-	parser.banner = "Usage: WebrickGUI [options] command"
-	parser.on('-p port', '--port:10080') {|v| OPTS[:p] = v}
+	Version = '0.0.1-dev'
 
-	args = []
-	_ARGV2 = []
-	err = ""
-	while !ARGV.empty? do
-		_ARGV2.push( ARGV.shift )
-		err = ""
-		begin
-			args = parser.parse(_ARGV2)
-		rescue => e
-			err = e.message
-		end
-		break if !args.empty?
-	end
-
-	if !err.empty?
-		puts err
-		exit
-	end
-
-	if args.empty? || args[0].empty?
-		puts "Too few options."
-		exit
-	end
-
-	command = args.concat( ARGV )
-
-	return {
-		command: command,
-		commandName: command[0],
-		commandFull: command.join(' '),
-		url: "http://localhost:#{OPTS[:p]}/",
-		port: OPTS[:p],
-		host: "localhost",
-	}
-end
-
-# meta data
-@meta = parseArg()
-
-
-
-#
-# run user program
-#
-@stdin, @stdout, @stderr, @wait_thread = Open3.popen3( @meta[:commandFull] )
-
-InputQueue  = Queue.new
-OutputQueue = Queue.new
-
-
-def start_output_thread
-	Thread.new do
-		puts "start_output_thread"
-		begin
-			# get data from user program
-			while data = @stdout.gets
-				puts "output: " + data
-				OutputQueue.push data
-			end
-		rescue => e
-			p e
-		end
-	end
-end
-
-def start_input_thread
-	Thread.new do
-		puts "start_input_thread"
-		begin
-			# puts data to user program
-			loop do
-				input_data = InputQueue.pop
-				command_alive?(true)
-				@stdin.puts input_data
-			end
-		rescue => e
-			p e
-		end
-	end
-end
-
-def start_err_thread
-	Thread.new do
-		puts "start_err_thread"
-		begin
-			while data = @stderr.gets
-				STDERR.puts data
-			end
-		rescue => e
-			p e
-		end
-	end
-end
-
-def start_checkalive_thread
-	Thread.new do
-		puts "start_checkalive_thread"
-		begin
-			loop do
-				alive = ['run', 'sleep'].include?( @wait_thread.status )
-				if !alive
-					OutputQueue.push '"(dead)"'
-					break
-				end
-				Thread.pass
-				sleep 0.1
-			end
-		rescue => e
-			p e
-		end
-	end
-end
-
-def command_alive?(restart = false)
-	result = ['run', 'sleep'].include?( @wait_thread.status )
-	#puts "command_alive? : " + result.to_s
-	if !result && restart
-		p @wait_thread.status
-		puts "program restart"
-		@stdin.close
-		@stdout.close
-		@stderr.close
-		@output_thread.join
-		@err_thread.join
-		@checkalive_thread.join
-		@stdin, @stdout, @stderr, @wait_thread = Open3.popen3( @meta[:commandFull] )
-		@output_thread = start_output_thread
-		@err_thread = start_err_thread
-		@checkalive_thread = start_checkalive_thread
-	end
-	result
-end
-
-
-#
-# start IO threads
-#
-@output_thread = start_output_thread
-@input_thread = start_input_thread
-@err_thread = start_err_thread
-@checkalive_thread = start_checkalive_thread
-
-
-#
-# start webrick
-#
-@server_thread = Thread.new do
-	begin
-		@server = server_start( port: OPTS[:p], meta: @meta ){ |req, res|
-			OutputQueue.clear
-			InputQueue.push req.query.to_json
-			OutputQueue.pop
+	#
+	# parse command line arguments
+	#
+	def parseArg(_ARGV)
+		opts = {
+			:p => 10080,
 		}
-	rescue => e
-		p e
+
+		parser = OptionParser.new
+		parser.version = Version
+		parser.banner = "Usage: WebrickGUI [options] command"
+		parser.on('-p port', '--port:10080') {|v| opts[:p] = v}
+
+		args = []
+		_ARGV2 = []
+		err = ""
+		while !_ARGV.empty? do
+			_ARGV2.push( _ARGV.shift )
+			err = ""
+			begin
+				args = parser.parse(_ARGV2)
+			rescue => e
+				err = e.message
+			end
+			break if !args.empty?
+		end
+
+		if !err.empty?
+			puts err
+			exit
+		end
+
+		if args.empty? || args[0].empty?
+			puts "Too few options."
+			exit
+		end
+
+		command = args.concat( _ARGV )
+
+		@meta = {
+			command: command,
+			commandName: command[0],
+			commandFull: command.join(' '),
+			url: "http://localhost:#{opts[:p]}/",
+			port: opts[:p],
+			host: "localhost",
+		}
+		return @meta
 	end
+	module_function :parseArg
+
+	#
+	# Open browser
+	#
+	def openBrowser(url)
+		case RbConfig::CONFIG['host_os']
+		when /mswin|mingw|cygwin/
+			spawn "start #{url}"
+		when /darwin/
+			spawn "open #{url}"
+		when /linux|bsd/
+			spawn "xdg-open #{url}"
+		end
+	end
+	module_function :openBrowser
+
 end
 
 
-#
-# Open browser
-#
-def openBrowser(url)
-	case RbConfig::CONFIG['host_os']
-	when /mswin|mingw|cygwin/
-		spawn "start #{url}"
-	when /darwin/
-		spawn "open #{url}"
-	when /linux|bsd/
-		spawn "xdg-open #{url}"
-	end
+
+if __FILE__ == $0
+
+	# parse command line arguments
+	meta = WebrickGUI.parseArg(ARGV)
+
+	# run user command and start Webrick server
+	server = WebrickGUI::Server.new(meta)
+
+	# wait
+	server.webrick.server_thread.join
+
 end
-openBrowser( @meta[:url] )
-
-
-# wait
-@server_thread.join
-
