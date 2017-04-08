@@ -16,6 +16,7 @@ module WebrickGUI
 		opts = {
 			:port => 10080,
 			:template => '',
+			:connectIO => false,
 		}
 
 		parser = OptionParser.new
@@ -23,6 +24,7 @@ module WebrickGUI
 		parser.banner = "Usage: WebrickGUI [options] command"
 		parser.on('-p port', '--port', 'Port. Default is 10080.') {|v| opts[:port] = v}
 		parser.on('-t path', '--template', 'Template file path.') {|v| opts[:template] = v}
+		parser.on('-C', '--connectIO', 'Use this stdin and stdout. When set this option, command is not required.') { opts[:connectIO] = true }
 
 		args = []
 		_ARGV2 = []
@@ -39,12 +41,12 @@ module WebrickGUI
 		end
 
 		if !err.empty?
-			puts err
+			$stderr.puts err
 			exit
 		end
 
-		if args.empty? || args[0].empty?
-			puts "Too few options."
+		if (args.empty? || args[0].empty?) && !opts[:connectIO]
+			$stderr.puts "Too few options."
 			exit
 		end
 
@@ -58,6 +60,7 @@ module WebrickGUI
 			port: opts[:port],
 			host: "localhost",
 			template: opts[:template],
+			connectIO: opts[:connectIO],
 		}
 		return @meta
 	end
@@ -69,11 +72,11 @@ module WebrickGUI
 	def openBrowser(url)
 		case RbConfig::CONFIG['host_os']
 		when /mswin|mingw|cygwin/
-			spawn "start #{url}"
+			spawn("start #{url}"    , :out=>$stdout)
 		when /darwin/
-			spawn "open #{url}"
+			spawn("open #{url}"     , :out=>$stdout)
 		when /linux|bsd/
-			spawn "xdg-open #{url}"
+			spawn("xdg-open #{url}" , :out=>$stdout)
 		end
 	end
 	module_function :openBrowser

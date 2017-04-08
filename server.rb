@@ -17,7 +17,7 @@ module WebrickGUI
 			@meta = meta
 
 			# run user program
-			@pipe = WebrickGUI::Pipe.new( @meta[:commandFull] )
+			@pipe = WebrickGUI::Pipe.new( @meta[:commandFull], connect_mode: @meta[:connectIO] ? 1 : 0 )
 
 			# start webrick server
 			@webrick = WebrickGUI::Webrick.new(@meta){ |req|

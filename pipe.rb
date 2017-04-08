@@ -11,13 +11,18 @@ module WebrickGUI
 		InputQueue  = Queue.new
 		OutputQueue = Queue.new
 
-		def initialize(command)
+		def initialize(command, connect_mode: 0, stdin: STDIN, stdout: STDOUT)
 			@command = command
+			@connect_mode = connect_mode
+			@default_IO = {
+				stdin: stdin,
+				stdout: stdout,
+			}
 
 			#
 			# run user program
 			#
-			@stdin, @stdout, @stderr, @wait_thread = Open3.popen3( @command )
+			open_pipe
 
 			#
 			# start IO threads
@@ -26,6 +31,27 @@ module WebrickGUI
 			@input_thread = start_input_thread
 			@err_thread = start_err_thread
 			@checkalive_thread = start_checkalive_thread
+		end
+
+		def open_pipe
+			case @connect_mode
+			when 1
+				# redirect STDIN and STDOUT
+				@stdin  = @default_IO[:stdout]
+				@stdout = @default_IO[:stdin]
+				@stderr = open(File::NULL, 'r')
+				pid = fork {
+					# child process to do nothing
+					quit = false
+					Kernel.trap( "INT" ){ quit = true }
+					while !quit do sleep 1 end
+				}
+				@wait_thread = Process.detach(pid)   # dummy thread
+				$stdout = open(File::NULL, 'w')
+			else
+				# default mode: open pipe of command
+				@stdin, @stdout, @stderr, @wait_thread = Open3.popen3( @command )
+			end
 		end
 
 		def start_output_thread
@@ -52,6 +78,7 @@ module WebrickGUI
 						input_data = InputQueue.pop
 						command_alive?(true)
 						@stdin.puts input_data
+						@stdin.flush
 					end
 				rescue => e
 					p e
@@ -103,7 +130,7 @@ module WebrickGUI
 				@output_thread.join
 				@err_thread.join
 				@checkalive_thread.join
-				@stdin, @stdout, @stderr, @wait_thread = Open3.popen3( @command )
+				open_pipe
 				@output_thread = start_output_thread
 				@err_thread = start_err_thread
 				@checkalive_thread = start_checkalive_thread
