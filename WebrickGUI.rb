@@ -14,13 +14,15 @@ module WebrickGUI
 	#
 	def parseArg(_ARGV)
 		opts = {
-			:p => 10080,
+			:port => 10080,
+			:template => '',
 		}
 
 		parser = OptionParser.new
 		parser.version = Version
 		parser.banner = "Usage: WebrickGUI [options] command"
-		parser.on('-p port', '--port:10080') {|v| opts[:p] = v}
+		parser.on('-p port', '--port', 'Port. Default is 10080.') {|v| opts[:port] = v}
+		parser.on('-t path', '--template', 'Template file path.') {|v| opts[:template] = v}
 
 		args = []
 		_ARGV2 = []
@@ -52,9 +54,10 @@ module WebrickGUI
 			command: command,
 			commandName: command[0],
 			commandFull: command.join(' '),
-			url: "http://localhost:#{opts[:p]}/",
-			port: opts[:p],
+			url: "http://localhost:#{opts[:port]}/",
+			port: opts[:port],
 			host: "localhost",
+			template: opts[:template],
 		}
 		return @meta
 	end

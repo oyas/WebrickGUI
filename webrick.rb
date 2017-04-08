@@ -46,6 +46,7 @@ module WebrickGUI
 				when '/'
 					filepath =
 						case true
+						when File.exist?(meta[:template])  then meta[:template]
 						when File.exist?("index.html.erb") then 'index.html.erb'
 						when File.exist?("index.html")     then 'index.html'
 						else THISDIR + '/index.html.erb'
