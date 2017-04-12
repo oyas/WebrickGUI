@@ -21,6 +21,9 @@ module WebrickGUI
 
 			# start webrick server
 			@webrick = WebrickGUI::Webrick.new(@meta){ |req|
+				# return @meta[:data] if '-c' option set.
+				next JSON.generate(@meta[:data]) if !@meta[:data].nil?
+
 				# send user request to user program
 				@pipe.send( req.query.to_json )
 			}
