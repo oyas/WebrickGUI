@@ -2,6 +2,7 @@
 # coding: utf-8
 
 require 'optparse'
+require 'json'
 require_relative "server.rb"
 
 
@@ -17,14 +18,21 @@ module WebrickGUI
 			:port => 10080,
 			:template => '',
 			:connectIO => false,
+			:data => nil,
 		}
 
 		parser = OptionParser.new
 		parser.version = Version
 		parser.banner = "Usage: WebrickGUI [options] command"
-		parser.on('-p port', '--port', 'Port. Default is 10080.') {|v| opts[:port] = v}
-		parser.on('-t path', '--template', 'Template file path.') {|v| opts[:template] = v}
-		parser.on('-C', '--connectIO', 'Use this stdin and stdout. When set this option, command is not required.') { opts[:connectIO] = true }
+		parser.on('-p port', '--port', 'Port. Default is 10080.'){|v| opts[:port] = v}
+		parser.on('-t path', '--template', 'Template file path.'){|v| opts[:template] = v}
+		parser.on('-C', '--connectIO', 'Use this stdin and stdout. When set this option, command is not required.'){ opts[:connectIO] = true }
+		parser.on('-c string',
+				  'Render with json data "string" and server shutdown. When set this option, command is not required.'
+				 ){|v|
+					 opts[:data] = JSON.parse(v)
+					 opts[:connectIO] = true
+				 }
 
 		args = []
 		_ARGV2 = []
@@ -61,6 +69,7 @@ module WebrickGUI
 			host: "localhost",
 			template: opts[:template],
 			connectIO: opts[:connectIO],
+			data: opts[:data],
 		}
 		return @meta
 	end
@@ -92,6 +101,12 @@ if __FILE__ == $0
 
 	# run user command and start Webrick server
 	server = WebrickGUI::Server.new(meta)
+
+	# kill after 1 sec if '-c' option set.
+	if !meta[:data].nil?
+		sleep 1
+		Process.kill(:INT, $$)
+	end
 
 	# wait
 	server.webrick.server_thread.join

@@ -16,7 +16,7 @@ module WebrickGUI
 		def initialize(meta, &block)
 			@server_thread = Thread.new do
 				begin
-					@server = server_start( port: meta[:port], meta: meta, &block )
+					@server = server_start( meta, &block )
 				rescue => e
 					p e
 				end
@@ -35,7 +35,11 @@ module WebrickGUI
 		#
 		# start webrick server
 		#
-		def server_start(port: PORT, rootdir: ROOTDIR, meta: {}, &block)
+		def server_start(meta = {}, &block)
+			port    = meta[:port]    || PORT
+			rootdir = meta[:rootdir] || ROOTDIR
+			data    = meta[:data]    || {}
+
 			server = WEBrick::HTTPServer.new({
 				:DocumentRoot => rootdir,
 				:Port => port,
