@@ -40,13 +40,7 @@ module WebrickGUI
 				@stdin  = @default_IO[:stdout]
 				@stdout = @default_IO[:stdin]
 				@stderr = open(File::NULL, 'r')
-				pid = fork {
-					# child process to do nothing
-					quit = false
-					Kernel.trap( "INT" ){ quit = true }
-					while !quit do sleep 1 end
-				}
-				@wait_thread = Process.detach(pid)   # dummy thread
+				@wait_thread = DummyThread.new   # dummy like a thread
 				$stdout = open(File::NULL, 'w')
 			else
 				# default mode: open pipe of command
@@ -142,6 +136,11 @@ module WebrickGUI
 			OutputQueue.clear
 			InputQueue.push data
 			OutputQueue.pop
+		end
+
+		# Dummy thread class. It works like a wait_thread.
+		class DummyThread
+			def status; 'run'; end
 		end
 
 	end

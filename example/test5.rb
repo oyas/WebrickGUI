@@ -56,3 +56,11 @@ looplimit.times do
 	puts "send data."
 end
 
+# wait for webrick response complete
+sleep 1
+
+# exiting
+stdin.close
+stdout.close
+stderr.close
+Process.kill(:INT, wait_thr.pid)
