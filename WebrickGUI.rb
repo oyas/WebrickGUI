@@ -60,7 +60,7 @@ module WebrickGUI
 
 		command = args.concat( _ARGV )
 
-		@meta = {
+		meta = {
 			command: command,
 			commandName: command[0],
 			commandFull: command.join(' '),
@@ -71,7 +71,7 @@ module WebrickGUI
 			connectIO: opts[:connectIO],
 			data: opts[:data],
 		}
-		return @meta
+		return meta
 	end
 	module_function :parseArg
 
@@ -90,6 +90,36 @@ module WebrickGUI
 	end
 	module_function :openBrowser
 
+	#
+	# start WebrickGUI server
+	#
+	def start(meta = {})
+		return nil if !meta.kind_of?(Hash)
+
+		meta = {
+			command: [],
+			port: '10080',
+			host: 'localhost',
+			template: '',
+			connectIO: true,
+			data: nil,
+		}.merge(meta)
+
+		if meta[:command].is_a?(String)
+			meta[:command] = [ meta[:command] ]
+		elsif !meta[:command].kind_of?(Array)
+			meta[:command] = []
+		end
+
+		meta[:commandName] ||= meta[:command][0] || ""
+		meta[:commandFull] ||= meta[:command].join(' ') || meta[:commandName]
+		meta[:url] ||= "http://#{meta[:host]}:#{meta[:port]}/"
+
+		# run user command and start Webrick server
+		WebrickGUI::Server.new(meta)
+	end
+	module_function :start
+
 end
 
 
@@ -100,7 +130,7 @@ if __FILE__ == $0
 	meta = WebrickGUI.parseArg(ARGV)
 
 	# run user command and start Webrick server
-	server = WebrickGUI::Server.new(meta)
+	server = WebrickGUI::start(meta)
 
 	# kill after 1 sec if '-c' option set.
 	if !meta[:data].nil?
