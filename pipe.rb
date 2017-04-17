@@ -11,12 +11,21 @@ module WebrickGUI
 		InputQueue  = Queue.new
 		OutputQueue = Queue.new
 
-		def initialize(command, connect_mode: 0, stdin: STDIN, stdout: STDOUT)
+		attr_accessor :in, :out
+
+		# default is output: STDOUT, input: STDIN
+		def initialize(command, connect_mode: 0, input: nil, output: nil)
 			@command = command
 			@connect_mode = connect_mode
+
+			# パイプ生成
+			@in = @out = nil
+			input, @in   = IO.pipe if input.nil?
+			@out, output = IO.pipe if output.nil?
+
 			@default_IO = {
-				stdin: stdin,
-				stdout: stdout,
+				in: output,
+				out: input,
 			}
 
 			#
@@ -37,11 +46,13 @@ module WebrickGUI
 			case @connect_mode
 			when 1
 				# redirect STDIN and STDOUT
-				@stdin  = @default_IO[:stdout]
-				@stdout = @default_IO[:stdin]
+				@stdin  = @default_IO[:in]
+				@stdout = @default_IO[:out]
 				@stderr = open(File::NULL, 'r')
 				@wait_thread = DummyThread.new   # dummy like a thread
-				$stdout = open(File::NULL, 'w')
+				if @stdin === STDOUT
+					$stdout = open(File::NULL, 'w')
+				end
 			else
 				# default mode: open pipe of command
 				@stdin, @stdout, @stderr, @wait_thread = Open3.popen3( @command )

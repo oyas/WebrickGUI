@@ -13,11 +13,15 @@ module WebrickGUI
 	#
 	class Server
 
-		def initialize(meta)
+		def initialize(meta, input: nil, output: nil)
 			@meta = meta
 
 			# run user program
-			@pipe = WebrickGUI::Pipe.new( @meta[:commandFull], connect_mode: @meta[:connectIO] ? 1 : 0 )
+			@pipe = WebrickGUI::Pipe.new( @meta[:commandFull], connect_mode: @meta[:connectIO] ? 1 : 0, input:input, output:output )
+
+			# short cut
+			@in = @pipe.in
+			@out = @pipe.out
 
 			# start webrick server
 			@webrick = WebrickGUI::Webrick.new(@meta){ |req|
@@ -32,7 +36,7 @@ module WebrickGUI
 			WebrickGUI.openBrowser( @meta[:url] )
 		end
 
-		attr_accessor :meta, :pipe, :webrick
+		attr_accessor :meta, :pipe, :webrick, :in, :out
 
 	end
 

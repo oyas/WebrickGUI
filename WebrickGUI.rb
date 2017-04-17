@@ -116,7 +116,7 @@ module WebrickGUI
 		meta[:url] ||= "http://#{meta[:host]}:#{meta[:port]}/"
 
 		# run user command and start Webrick server
-		WebrickGUI::Server.new(meta)
+		WebrickGUI::Server.new(meta, input: meta[:input], output: meta[:output])
 	end
 	module_function :start
 
@@ -130,7 +130,7 @@ if __FILE__ == $0
 	meta = WebrickGUI.parseArg(ARGV)
 
 	# run user command and start Webrick server
-	server = WebrickGUI::start(meta)
+	server = WebrickGUI::start( meta.merge({input: STDIN, output: STDOUT}) )
 
 	# kill after 1 sec if '-c' option set.
 	if !meta[:data].nil?
