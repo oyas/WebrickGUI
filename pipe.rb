@@ -18,7 +18,7 @@ module WebrickGUI
 			@command = command
 			@connect_mode = connect_mode
 
-			# パイプ生成
+			# generate pipe for user
 			@in = @out = nil
 			input, @in   = IO.pipe if input.nil?
 			@out, output = IO.pipe if output.nil?
