@@ -2,45 +2,6 @@
  * WebrickGUI main JavaScript.
  */
 
-let test_data = {
-	"render": "blocks",
-	"content": [
-		{
-			"content": "test string"
-		},
-		{
-			"content": {
-				"render": "raw",
-				"content": "test string",
-			},
-		},
-		{
-			"content": [
-				"array",
-				"array",
-				{
-					"a": "b",
-					'x': ['y', 'z'],
-				},
-				[
-					"a2",
-					"a2",
-				],
-			]
-		},
-		"test string",
-		{
-			"render": "html",
-			"element": "h1",
-			"content": [
-				"kkk",
-				"bbb"
-			]
-		}
-	]
-};
-
-
 
 $(function(){
 	// set renderer
@@ -118,19 +79,12 @@ var WebrickGUI = {
 
 		if( $.isPlainObject(data) ){
 			if( !('content' in data) ){
-				return WebrickGUI._renderer['raw']( {'content': data} );
+				data['content'] = '';
 			}
 
 			// parse 'element name': {attributes}
 			if( !('render' in data) ){
-				$.each( data, (key, val) => {
-					if( key != 'content' ){
-						data['render']    = 'html';
-						data['element']   = key;
-						data['attribute'] = val;
-						return false;
-					}
-				});
+				data = WebrickGUI.parse_shortHTML(data);
 			}
 
 			let renderer = WebrickGUI.parse;
@@ -159,6 +113,21 @@ var WebrickGUI = {
 		_renderer[rendererName] = func;
 		return true;
 	},
+
+	/**
+	 * parse short html render style: 'element name': {attributes}
+	 */
+	parse_shortHTML: function(data){
+		$.each( data, (key, val) => {
+			if( key != 'content' ){
+				data['render']    = 'html';
+				data['element']   = key;
+				data['attribute'] = val;
+				return false;
+			}
+		});
+		return data
+	}
 
 	/**
 	 * default renderers
@@ -219,7 +188,8 @@ var WebrickGUI = {
 			}
 
 			return result;
-		}
+		},
+
 	}
 
 };
