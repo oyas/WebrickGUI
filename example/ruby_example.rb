@@ -26,28 +26,30 @@ stdout = server.out
 puts "started WebrickGUI."
 
 
-data = [
-	{
-		"h2" => {},
-		"content" => "TITLE",
-	},
-	"Hello, WebrickGUI.",
-	{
-		"form": {
-			"action": "get"
+data = {
+	content: [
+		{
+			"h2" => {},
+			"content" => "TITLE",
 		},
-		"content" => [
-			'<input id="a" type="text">',
-			{
-				"button" => {
-					"type" => "button",
-					"onclick" => "WebrickGUI.send({input:$(\'#a\').val()});",
-				},
-				"content" => "send",
+		"Hello, WebrickGUI.",
+		{
+			"form": {
+				"action": "get"
 			},
-		],
-	},
-]
+			"content" => [
+				'<input id="a" type="text">',
+				{
+					"button" => {
+						"type" => "button",
+						"onclick" => "WebrickGUI.send({input:$(\'#a\').val()});",
+					},
+					"content" => "send",
+				},
+			],
+		},
+	]
+}
 
 looplimit = (ARGV[0] || 1000).to_i
 
@@ -58,7 +60,7 @@ Signal.trap('INT'){
 }
 
 looplimit.times do
-	data.push stdout.gets.chomp
+	data[:content].push stdout.gets.chomp
 	stdin.puts JSON.generate(data)
 	stdin.flush
 	puts "send data."

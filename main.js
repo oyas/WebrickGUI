@@ -17,6 +17,7 @@ $(function(){
 
 var WebrickGUI = {
 
+	// list of renderer
 	_renderer: {},
 
 	/**
@@ -27,8 +28,11 @@ var WebrickGUI = {
 			type: "POST",
 			url: "/get",
 			data: senddata,
-		}).done( (data) => {
+		}).done( (dataAll) => {
 			$('#content').empty();
+			console.log(dataAll);
+			// pre parse
+			data = WebrickGUI.preparse(dataAll);
 			console.log(data);
 			// parse JSON data
 			let result = WebrickGUI.parse(data);
@@ -43,6 +47,17 @@ var WebrickGUI = {
 	 */
 	update: function(){
 		WebrickGUI.send();
+	},
+
+	/**
+	 * pre parse JSON data
+	 */
+	preparse: function(data){
+		if( !('content' in data) ){
+			return null;
+		}else{
+			return data['content'];
+		}
 	},
 
 	/**
@@ -127,7 +142,7 @@ var WebrickGUI = {
 			}
 		});
 		return data
-	}
+	},
 
 	/**
 	 * default renderers

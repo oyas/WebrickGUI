@@ -44,21 +44,23 @@ Render 'index.html.erb' with data of '-c' option's value and shutdown immediatel
 example:
 
 	{
-		"render": "blocks",
-		"content": [
-			{
-				"render": "html",
-				"element": "h2",
-				"attribute": {
-					"id": "title"
+		"content": {
+			"render": "blocks",
+			"content": [
+				{
+					"render": "html",
+					"element": "h2",
+					"attribute": {
+						"id": "title"
+					},
+					"content": "TITLE"
 				},
-				"content": "TITLE"
-			},
-			{
-				"render": "raw",
-				"content": "<p>Hello.</p>",
-			}
-		]
+				{
+					"render": "raw",
+					"content": "<p>Hello.</p>",
+				}
+			]
+		}
 	}
 
 result:
