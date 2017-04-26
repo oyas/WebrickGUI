@@ -4,8 +4,8 @@
 
 
 $(function(){
-	// set renderer
-	WebrickGUI._renderer = $.extend(true, {}, WebrickGUI.defaultRenderers);
+	// initialize
+	WebrickGUI.initialize();
 
 	// set event
 	$('#runButton').on('click', WebrickGUI.update);
@@ -19,6 +19,19 @@ var WebrickGUI = {
 
 	// list of renderer
 	_renderer: {},
+
+	// Vue instance
+	_vue: null,
+
+	initialize: function(){
+		// set renderer
+		WebrickGUI._renderer = $.extend(true, {}, WebrickGUI.defaultRenderers);
+
+		// set Vue instance
+		WebrickGUI._vue = new Vue({
+			el: '#content',
+		});
+	},
 
 	/**
 	 * send JSON data to server, and update
@@ -39,6 +52,11 @@ var WebrickGUI = {
 			console.log( result instanceof jQuery ? result.html() : result );
 			// append parse result
 			$('#content').append( result );
+			// binding data with Vue.js
+			WebrickGUI._vue = new Vue({
+				el: '#content',
+				data: dataAll,
+			});
 		});
 	},
 
